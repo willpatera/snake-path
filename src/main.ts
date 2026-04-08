@@ -25,8 +25,10 @@ function render() {
   if (!generator) return;
   const svg = renderToSVG(
     generator.state.pieces,
+    generator.state.crossings,
     generator.state.alive ? generator.state.position : null,
     generator.config,
+    ui.getRenderOptions(),
   );
   currentSVG = svg;
   canvasContainer.innerHTML = '';
@@ -97,5 +99,8 @@ const ui = buildUI(controlsContainer, {
   },
   onExportPNG() {
     if (currentSVG) exportPNG(currentSVG);
+  },
+  onRenderOptionsChange() {
+    render();
   },
 });

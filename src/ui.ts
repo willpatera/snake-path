@@ -1,5 +1,7 @@
 import type { GeneratorConfig } from './types';
 import { DEFAULT_CONFIG } from './config';
+import type { RenderOptions } from './renderer';
+import { DEFAULT_RENDER_OPTIONS } from './renderer';
 
 export type UICallbacks = {
   onStart: (config: GeneratorConfig) => void;
@@ -9,11 +11,13 @@ export type UICallbacks = {
   onSpeedChange: (stepsPerSecond: number) => void;
   onExportSVG: () => void;
   onExportPNG: () => void;
+  onRenderOptionsChange: () => void;
 };
 
 export type UIRefs = {
   updateStats: (pieces: number, crossings: number, length: number, alive: boolean, reason: string) => void;
   setPlayState: (playing: boolean) => void;
+  getRenderOptions: () => RenderOptions;
 };
 
 export function buildUI(
@@ -96,6 +100,78 @@ export function buildUI(
   exportGroup.appendChild(pngBtn);
   panel.appendChild(exportGroup);
 
+  // Gradient controls
+  const gradSection = el('div', 'control-group');
+  const gradLabel = document.createElement('label');
+  gradLabel.className = 'control-label';
+  gradLabel.textContent = 'Gradient';
+  gradSection.appendChild(gradLabel);
+
+  const gradToggle = document.createElement('input');
+  gradToggle.type = 'checkbox';
+  gradToggle.checked = DEFAULT_RENDER_OPTIONS.gradient;
+  gradToggle.addEventListener('change', () => callbacks.onRenderOptionsChange());
+  const gradToggleLabel = document.createElement('label');
+  gradToggleLabel.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer';
+  gradToggleLabel.appendChild(gradToggle);
+  gradToggleLabel.appendChild(document.createTextNode('Enable gradient'));
+  gradSection.appendChild(gradToggleLabel);
+
+  const colorRow = el('div');
+  colorRow.style.cssText = 'display:flex;gap:12px;align-items:center;margin-top:4px';
+
+  const startColorInput = document.createElement('input');
+  startColorInput.type = 'color';
+  startColorInput.value = DEFAULT_RENDER_OPTIONS.gradientStart;
+  startColorInput.addEventListener('input', () => callbacks.onRenderOptionsChange());
+  const startLbl = document.createElement('label');
+  startLbl.style.cssText = 'font-size:12px;display:flex;align-items:center;gap:4px';
+  startLbl.textContent = 'Start ';
+  startLbl.appendChild(startColorInput);
+
+  const endColorInput = document.createElement('input');
+  endColorInput.type = 'color';
+  endColorInput.value = DEFAULT_RENDER_OPTIONS.gradientEnd;
+  endColorInput.addEventListener('input', () => callbacks.onRenderOptionsChange());
+  const endLbl = document.createElement('label');
+  endLbl.style.cssText = 'font-size:12px;display:flex;align-items:center;gap:4px';
+  endLbl.textContent = 'End ';
+  endLbl.appendChild(endColorInput);
+
+  colorRow.appendChild(startLbl);
+  colorRow.appendChild(endLbl);
+  gradSection.appendChild(colorRow);
+  panel.appendChild(gradSection);
+
+  // Rendering toggles
+  const renderSection = el('div', 'control-group');
+  const renderLabel = document.createElement('label');
+  renderLabel.className = 'control-label';
+  renderLabel.textContent = 'Rendering';
+  renderSection.appendChild(renderLabel);
+
+  const hideCapToggle = document.createElement('input');
+  hideCapToggle.type = 'checkbox';
+  hideCapToggle.checked = DEFAULT_RENDER_OPTIONS.hideEndCap;
+  hideCapToggle.addEventListener('change', () => callbacks.onRenderOptionsChange());
+  const hideCapLabel = document.createElement('label');
+  hideCapLabel.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer';
+  hideCapLabel.appendChild(hideCapToggle);
+  hideCapLabel.appendChild(document.createTextNode('Hide end caps'));
+  renderSection.appendChild(hideCapLabel);
+
+  const weaveToggle = document.createElement('input');
+  weaveToggle.type = 'checkbox';
+  weaveToggle.checked = DEFAULT_RENDER_OPTIONS.weave;
+  weaveToggle.addEventListener('change', () => callbacks.onRenderOptionsChange());
+  const weaveLabel = document.createElement('label');
+  weaveLabel.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-top:4px';
+  weaveLabel.appendChild(weaveToggle);
+  weaveLabel.appendChild(document.createTextNode('Alternating weave'));
+  renderSection.appendChild(weaveLabel);
+
+  panel.appendChild(renderSection);
+
   // Stats
   const statsEl = el('div', 'stats');
   statsEl.textContent = 'Press Start to begin.';
@@ -115,6 +191,15 @@ export function buildUI(
     setPlayState(playing: boolean) {
       const btn = document.getElementById('pause-btn');
       if (btn) btn.textContent = playing ? 'Pause' : 'Resume';
+    },
+    getRenderOptions(): RenderOptions {
+      return {
+        gradient: gradToggle.checked,
+        gradientStart: startColorInput.value,
+        gradientEnd: endColorInput.value,
+        hideEndCap: hideCapToggle.checked,
+        weave: weaveToggle.checked,
+      };
     },
   };
 }
